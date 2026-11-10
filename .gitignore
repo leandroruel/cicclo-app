@@ -1,0 +1,21 @@
+# .NET
+**/bin/
+**/obj/
+**/TestResults/
+*.user
+*.suo
+
+# Local database
+*.db
+*.db-shm
+*.db-wal
+
+# Node / Expo
+node_modules/
+.expo/
+dist/
+
+# Local environment
+.env
+.env.*
+!.env.example

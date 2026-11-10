@@ -1,0 +1,48 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cicclo.Domain", "src\Cicclo.Domain\Cicclo.Domain.csproj", "{65D5E4E2-94F3-47D5-A230-A40C1427521C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cicclo.Application", "src\Cicclo.Application\Cicclo.Application.csproj", "{F1EF84EC-6934-4C6F-B56A-CC216862B355}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cicclo.Infrastructure", "src\Cicclo.Infrastructure\Cicclo.Infrastructure.csproj", "{0286C80E-D083-41DD-B7EF-A69C9EEFA914}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cicclo.Api", "src\Cicclo.Api\Cicclo.Api.csproj", "{8AD6A131-335D-44AA-8D66-5513319C717A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cicclo.Domain.Tests", "tests\Cicclo.Domain.Tests\Cicclo.Domain.Tests.csproj", "{DD521A41-3D84-45FD-AC06-C0B875A3674C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cicclo.Api.Tests", "tests\Cicclo.Api.Tests\Cicclo.Api.Tests.csproj", "{CDE150B2-4FD5-41DB-9EA0-65008D9C652D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{65D5E4E2-94F3-47D5-A230-A40C1427521C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65D5E4E2-94F3-47D5-A230-A40C1427521C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65D5E4E2-94F3-47D5-A230-A40C1427521C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65D5E4E2-94F3-47D5-A230-A40C1427521C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1EF84EC-6934-4C6F-B56A-CC216862B355}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1EF84EC-6934-4C6F-B56A-CC216862B355}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1EF84EC-6934-4C6F-B56A-CC216862B355}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1EF84EC-6934-4C6F-B56A-CC216862B355}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0286C80E-D083-41DD-B7EF-A69C9EEFA914}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0286C80E-D083-41DD-B7EF-A69C9EEFA914}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0286C80E-D083-41DD-B7EF-A69C9EEFA914}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0286C80E-D083-41DD-B7EF-A69C9EEFA914}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8AD6A131-335D-44AA-8D66-5513319C717A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8AD6A131-335D-44AA-8D66-5513319C717A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8AD6A131-335D-44AA-8D66-5513319C717A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8AD6A131-335D-44AA-8D66-5513319C717A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD521A41-3D84-45FD-AC06-C0B875A3674C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD521A41-3D84-45FD-AC06-C0B875A3674C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD521A41-3D84-45FD-AC06-C0B875A3674C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD521A41-3D84-45FD-AC06-C0B875A3674C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CDE150B2-4FD5-41DB-9EA0-65008D9C652D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CDE150B2-4FD5-41DB-9EA0-65008D9C652D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CDE150B2-4FD5-41DB-9EA0-65008D9C652D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CDE150B2-4FD5-41DB-9EA0-65008D9C652D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
