@@ -1,3 +1,4 @@
+using Cicclo.Domain.Services;
 using Cicclo.Domain.Wallets;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,12 +10,21 @@ public static class DbSeeder
 
     public static async Task SeedAsync(AppDbContext dbContext, CancellationToken cancellationToken)
     {
-        if (await dbContext.Wallets.AnyAsync(cancellationToken))
+        if (!await dbContext.Wallets.AnyAsync(cancellationToken))
         {
-            return;
+            dbContext.Wallets.Add(new Wallet(DefaultWalletId, 50.00m));
         }
 
-        dbContext.Wallets.Add(new Wallet(DefaultWalletId, 50.00m));
-        await dbContext.SaveChangesAsync(cancellationToken);
+        if (!await dbContext.Services.AnyAsync(cancellationToken))
+        {
+            dbContext.Services.AddRange(
+                new LaundryService(1, "Lavagem", 18.90m, active: true),
+                new LaundryService(2, "Secagem", 20.90m, active: true));
+        }
+
+        if (dbContext.ChangeTracker.HasChanges())
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
     }
 }

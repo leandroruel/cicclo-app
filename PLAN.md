@@ -519,7 +519,8 @@ Fora dos testes de propósito: estilo e navegação (pouco valor neste escopo).
 ### Estado da wallet
 
 - Concluído: regras e testes unitários de débito/crédito, persistência SQLite com migrations e seed de R$ 50,00, `GET /api/v1/wallet`, crédito idempotente em `POST /api/v1/wallet/credits` e testes de integração.
-- Pendente para as próximas etapas do plano: tabelas e seed de serviços/pedidos, débito acionado por pedido, idempotência/concorrência dos pedidos, integração mobile e documentação completa da API.
+- Concluído nesta etapa: tabelas e seed de serviços, `POST /api/v1/orders`, débito/pedido/extrato atômicos, replay idempotente, proteção de saldo sob concorrência e testes de integração.
+- Pendente para as próximas etapas do plano: endpoint para listar serviços, histórico opcional de pedidos, integração mobile e documentação OpenAPI/arquitetura completa.
 
 ### Checklist de entrega
 

@@ -29,3 +29,39 @@ Content-Type: application/json
 {
   "amount": 25.00
 }
+
+### Create a laundry order
+POST {{baseUrl}}/api/v1/orders
+Idempotency-Key: 7ce7afde-b3c8-4c0f-b59a-f21d9a74f060
+Content-Type: application/json
+
+{
+  "serviceId": 1
+}
+
+### Retry the same order with the same key; expect 200 and Idempotent-Replayed: true
+POST {{baseUrl}}/api/v1/orders
+Idempotency-Key: 7ce7afde-b3c8-4c0f-b59a-f21d9a74f060
+Content-Type: application/json
+
+{
+  "serviceId": 1
+}
+
+### Reusing the order key for another service returns 422
+POST {{baseUrl}}/api/v1/orders
+Idempotency-Key: 7ce7afde-b3c8-4c0f-b59a-f21d9a74f060
+Content-Type: application/json
+
+{
+  "serviceId": 2
+}
+
+### Requesting an unknown service returns 404
+POST {{baseUrl}}/api/v1/orders
+Idempotency-Key: 72312007-4576-4f7a-9761-a123b6b0c1a8
+Content-Type: application/json
+
+{
+  "serviceId": 999
+}

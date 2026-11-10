@@ -19,6 +19,7 @@ public static class DependencyInjection
 
         services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
         services.AddScoped<IWalletRepository, WalletRepository>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
 
         return services;
     }

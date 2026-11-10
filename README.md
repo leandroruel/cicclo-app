@@ -21,7 +21,16 @@ curl -X POST http://localhost:5000/api/v1/wallet/credits \
   -d '{"amount":50.00}'
 ```
 
-O débito ainda não é acionado por uma operação HTTP; isso depende do fluxo de pedidos, que permanece fora desta etapa.
+Pedidos podem ser criados em `POST /api/v1/orders` com `{"serviceId": 1}` e `Idempotency-Key` UUID. O débito, o pedido e o lançamento no extrato são gravados atomicamente. Uma repetição válida retorna o pedido original; a API responde com erros de saldo insuficiente, serviço inexistente, chave reutilizada com outro serviço e conflito transitório da carteira conforme o contrato em [PLAN.md](./PLAN.md).
+
+```bash
+curl -X POST http://localhost:5000/api/v1/orders \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: 7ce7afde-b3c8-4c0f-b59a-f21d9a74f060' \
+  -d '{"serviceId":1}'
+```
+
+Os serviços Lavagem e Secagem são seedados na base. O endpoint para listá-los e a integração do app ainda não foram implementados.
 
 Com o SDK .NET 10 instalado, rode os testes de domínio:
 
