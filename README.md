@@ -30,7 +30,14 @@ curl -X POST http://localhost:5000/api/v1/orders \
   -d '{"serviceId":1}'
 ```
 
-Os serviços Lavagem e Secagem são seedados na base. O endpoint para listá-los e a integração do app ainda não foram implementados.
+Os serviços Lavagem e Secagem são seedados na base. Consulte os serviços ativos em `GET /api/v1/services` ou busque um serviço ativo por ID em `GET /api/v1/services/{id}`. IDs inexistentes ou inativos retornam `404`:
+
+```bash
+curl http://localhost:5000/api/v1/services
+curl http://localhost:5000/api/v1/services/1
+```
+
+A integração do app ainda não foi implementada.
 
 Com o SDK .NET 10 instalado, rode os testes de domínio:
 
@@ -45,4 +52,4 @@ O teste de integração da wallet roda com:
 dotnet test Cicclo.sln --filter FullyQualifiedName~Cicclo.Api.Tests
 ```
 
-Inicie a API em desenvolvimento a partir de `backend/src/Cicclo.Api` com `dotnet run`. As migrations são aplicadas e a carteira inicial é inserida automaticamente. A referência OpenAPI e a interface Scalar ficam disponíveis no ambiente de desenvolvimento. Serviços, pedidos, integração do app e demais operações ainda não foram implementados.
+Inicie a API em desenvolvimento a partir de `backend/src/Cicclo.Api` com `dotnet run`. As migrations são aplicadas e os dados iniciais são inseridos automaticamente. A referência OpenAPI e a interface Scalar ficam disponíveis no ambiente de desenvolvimento. A integração mobile ainda não foi implementada.

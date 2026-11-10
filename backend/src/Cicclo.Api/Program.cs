@@ -1,6 +1,7 @@
 using Cicclo.Application.Wallets.GetWallet;
 using Cicclo.Application.Wallets.CreditWallet;
 using Cicclo.Application.Orders.CreateOrder;
+using Cicclo.Application.Services.GetServices;
 using Cicclo.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Scalar.AspNetCore;
@@ -25,6 +26,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddScoped<GetWalletUseCase>();
 builder.Services.AddScoped<CreditWalletUseCase>();
 builder.Services.AddScoped<CreateOrderUseCase>();
+builder.Services.AddScoped<GetServicesUseCase>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();

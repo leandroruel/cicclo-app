@@ -1,5 +1,14 @@
 @baseUrl = http://localhost:5000
 
+### Get active services
+GET {{baseUrl}}/api/v1/services
+
+### Get a service by ID
+GET {{baseUrl}}/api/v1/services/1
+
+### Request a service that does not exist (404)
+GET {{baseUrl}}/api/v1/services/999
+
 ### Get wallet
 GET {{baseUrl}}/api/v1/wallet
 
