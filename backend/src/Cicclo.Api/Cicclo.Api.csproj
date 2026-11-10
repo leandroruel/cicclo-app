@@ -2,6 +2,7 @@
   <ItemGroup>
     <ProjectReference Include="../Cicclo.Application/Cicclo.Application.csproj" />
     <ProjectReference Include="../Cicclo.Infrastructure/Cicclo.Infrastructure.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

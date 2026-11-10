@@ -1,0 +1,31 @@
+@baseUrl = http://localhost:5000
+
+### Get wallet
+GET {{baseUrl}}/api/v1/wallet
+
+### Add R$ 50.00 to the wallet
+POST {{baseUrl}}/api/v1/wallet/credits
+Idempotency-Key: wallet-credit-50-example
+Content-Type: application/json
+
+{
+  "amount": 50.00
+}
+
+### Retry the same credit safely with the same idempotency key and payload
+POST {{baseUrl}}/api/v1/wallet/credits
+Idempotency-Key: wallet-credit-50-example
+Content-Type: application/json
+
+{
+  "amount": 50.00
+}
+
+### Reusing a key with a different amount returns 409 Conflict
+POST {{baseUrl}}/api/v1/wallet/credits
+Idempotency-Key: wallet-credit-50-example
+Content-Type: application/json
+
+{
+  "amount": 25.00
+}

@@ -31,6 +31,17 @@ public sealed class Wallet
 
     public Guid Version { get; private set; }
 
+    public void Credit(decimal amount)
+    {
+        if (amount <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(amount), "O valor do crédito deve ser positivo.");
+        }
+
+        Balance += amount;
+        Version = Guid.NewGuid();
+    }
+
     public void Debit(decimal amount)
     {
         if (amount <= 0)

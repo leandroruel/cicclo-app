@@ -4,8 +4,34 @@ using Xunit;
 
 namespace Cicclo.Domain.Tests.Wallets;
 
-public sealed class WalletDebitTests
+public sealed class WalletTests
 {
+    [Fact]
+    public void Credit_WhenAmountIsPositive_IncreasesBalanceAndChangesVersion()
+    {
+        var wallet = CreateWallet(50m);
+        var originalVersion = wallet.Version;
+
+        wallet.Credit(50m);
+
+        Assert.Equal(100m, wallet.Balance);
+        Assert.NotEqual(originalVersion, wallet.Version);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Credit_WhenAmountIsNotPositive_ThrowsWithoutChangingState(decimal amount)
+    {
+        var wallet = CreateWallet(50m);
+        var originalVersion = wallet.Version;
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => wallet.Credit(amount));
+
+        Assert.Equal(50m, wallet.Balance);
+        Assert.Equal(originalVersion, wallet.Version);
+    }
+
     [Fact]
     public void Debit_WhenBalanceIsSufficient_ReducesBalanceAndChangesVersion()
     {
