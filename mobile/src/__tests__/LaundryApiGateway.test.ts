@@ -43,6 +43,40 @@ describe('LaundryApiGateway', () => {
     );
   });
 
+  it('sends an idempotent wallet credit request and returns the credited wallet', async () => {
+    vi.stubEnv('EXPO_PUBLIC_API_URL', 'https://api.cicclo.test/');
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          id: '5b1f0c1e-7a34-4c53-9c0e-2f6f4a1d9a10',
+          balance: 75,
+          currency: 'BRL',
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const wallet = await new LaundryApiGateway().creditWallet(25, idempotencyKey);
+
+    expect(wallet).toEqual({
+      id: '5b1f0c1e-7a34-4c53-9c0e-2f6f4a1d9a10',
+      balance: 75,
+      currency: 'BRL',
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.cicclo.test/api/v1/wallet/credits',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'Idempotency-Key': idempotencyKey,
+          'Content-Type': 'application/json',
+        }),
+        body: JSON.stringify({ amount: 25 }),
+      }),
+    );
+  });
+
   it('maps API problem details into a typed application error', async () => {
     vi.stubEnv('EXPO_PUBLIC_API_URL', 'https://api.cicclo.test');
     vi.stubGlobal(

@@ -80,6 +80,19 @@ export class LaundryApiGateway implements LaundryGateway {
     return response.items;
   }
 
+  async creditWallet(amount: number, idempotencyKey: string): Promise<Wallet> {
+    const response = await requestJson('/api/v1/wallet/credits', {
+      method: 'POST',
+      headers: { 'Idempotency-Key': idempotencyKey },
+      body: { amount },
+    });
+    if (!isWallet(response)) {
+      throw new Error('A API retornou dados inválidos para o crédito da carteira.');
+    }
+
+    return response;
+  }
+
   async createOrder(
     serviceId: number,
     idempotencyKey: string,

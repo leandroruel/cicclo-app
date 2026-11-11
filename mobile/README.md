@@ -1,7 +1,8 @@
 # Cicclo Mobile
 
-Expo app for viewing the wallet balance, browsing active services, and placing
-idempotent service requests.
+Expo app for viewing the wallet balance, adding simulated wallet credits,
+browsing active services, and placing idempotent service requests. Simulated
+credits update the API balance immediately and do not process real payments.
 
 ## Run locally
 

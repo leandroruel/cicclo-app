@@ -20,6 +20,7 @@ describe('requestService', () => {
     const gateway: LaundryGateway = {
       getWallet: vi.fn(),
       listServices: vi.fn(),
+      creditWallet: vi.fn(),
       createOrder,
     };
     const input = {
@@ -39,6 +40,7 @@ describe('requestService', () => {
     const gateway: LaundryGateway = {
       getWallet: vi.fn(),
       listServices: vi.fn(),
+      creditWallet: vi.fn(),
       createOrder: vi.fn(async () => {
         throw error;
       }),
