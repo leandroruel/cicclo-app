@@ -12,6 +12,32 @@ Aplicação mobile e API para simular uma lavanderia automatizada. O plano funci
 
 A wallet está implementada no backend: domínio de débito e crédito em `decimal`, versão para concorrência otimista, persistência SQLite versionada por migrations e seed de R$ 50,00. A API expõe `GET /api/v1/wallet` para a carteira padrão, `GET /api/v1/wallet/{id}` para consultar uma carteira pelo ID e `POST /api/v1/wallet/credits`.
 
+### Executar a API com Docker
+
+Com Docker instalado, na raiz do repositório, construa e inicie a API:
+
+```bash
+docker build -t cicclo-api ./backend
+docker run --name cicclo-api -d -p 8080:8080 -v cicclo-data:/data cicclo-api
+```
+
+O SQLite fica no volume `cicclo-data`, preservado ao remover ou recriar o container. Na primeira execução, migrations e dados iniciais são aplicados automaticamente. A API fica disponível em `http://localhost:8080`; confirme com:
+
+```bash
+curl http://localhost:8080/api/v1/wallet
+```
+
+Para usar de outro dispositivo na mesma rede, configure o app com `http://<IP-do-computador-que-roda-o-Docker>:8080` como `EXPO_PUBLIC_API_URL` e permita a porta 8080 no firewall local. Isso não expõe a API à internet. O CORS atual permite somente a prévia web Expo em `localhost:8081` e `127.0.0.1:8081`; apps nativos não estão sujeitos à política CORS do navegador.
+
+Para interromper e retomar a mesma instância:
+
+```bash
+docker stop cicclo-api
+docker start cicclo-api
+```
+
+Para ver os logs, use `docker logs -f cicclo-api`. Evite remover o volume `cicclo-data` se quiser manter os dados da carteira.
+
 O crédito recebe `{"amount": 50.00}` e exige o cabeçalho `Idempotency-Key`. Repetir a mesma chave e o mesmo valor devolve o resultado original sem creditar novamente; reutilizar a chave com outro valor retorna `409 Conflict`. O saldo e o registro idempotente são salvos na mesma transação.
 
 ```bash
