@@ -16,7 +16,7 @@ namespace Cicclo.Infrastructure.Persistence.Migrations
                 table: "WalletCredits",
                 type: "TEXT",
                 nullable: false,
-                defaultValueSql: "(strftime('%Y-%m-%dT%H:%M:%f+00:00', 'now'))");
+                defaultValue: DateTimeOffset.UtcNow);
         }
 
         /// <inheritdoc />
