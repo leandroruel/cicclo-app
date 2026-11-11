@@ -10,6 +10,64 @@ namespace Cicclo.Api.Tests;
 public sealed class OrdersTests
 {
     [Fact]
+    public async Task GetOrders_WhenHistoryIsEmpty_ReturnsEmptyList()
+    {
+        using var factory = new ApiFactory();
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync("/api/v1/orders");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<OrderListResponse>();
+        Assert.NotNull(result);
+        Assert.Empty(result.Items);
+    }
+
+    [Fact]
+    public async Task GetOrders_ReturnsSuccessfulOrdersNewestFirstWithoutReplayOrFailedOrders()
+    {
+        using var factory = new ApiFactory();
+        using var client = factory.CreateClient();
+        var firstKey = Guid.NewGuid();
+        using var firstResponse = await CreateOrderAsync(client, 1, firstKey);
+        await Task.Delay(20);
+        var secondKey = Guid.NewGuid();
+        using var secondResponse = await CreateOrderAsync(client, 2, secondKey);
+        using var replayResponse = await CreateOrderAsync(client, 2, secondKey);
+        using var failedResponse = await CreateOrderAsync(client, 1, Guid.NewGuid());
+
+        Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, secondResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, replayResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, failedResponse.StatusCode);
+
+        using var response = await client.GetAsync("/api/v1/orders");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<OrderListResponse>();
+        Assert.NotNull(result);
+        Assert.Collection(
+            result.Items,
+            order =>
+            {
+                Assert.Equal(2, order.ServiceId);
+                Assert.Equal("Secagem", order.ServiceName);
+                Assert.Equal(20.90m, order.Price);
+                Assert.Equal("BRL", order.Currency);
+                Assert.Equal("Confirmed", order.Status);
+            },
+            order =>
+            {
+                Assert.Equal(1, order.ServiceId);
+                Assert.Equal("Lavagem", order.ServiceName);
+                Assert.Equal(18.90m, order.Price);
+                Assert.Equal("BRL", order.Currency);
+                Assert.Equal("Confirmed", order.Status);
+            });
+        Assert.Equal(2, result.Items.Select(order => order.Id).Distinct().Count());
+        Assert.All(result.Items, order => Assert.NotEqual(default, order.CreatedAt));
+    }
+
+    [Fact]
     public async Task CreateOrders_FollowsReferenceScenarioAndPreservesBalanceOnInsufficientFunds()
     {
         using var factory = new ApiFactory();

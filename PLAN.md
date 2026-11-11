@@ -169,9 +169,9 @@ Solicita a execução de um serviço, debitando a carteira.
 }
 ```
 
-### `GET /orders` (opcional)
+### `GET /orders`
 
-Histórico do usuário, do mais recente para o mais antigo.
+Histórico do usuário, do mais recente para o mais antigo. Nesta versão, a listagem retorna todos os pedidos e não é paginada (paginação está fora do escopo).
 
 ```json
 {
@@ -206,10 +206,19 @@ public sealed record OrderResponse(
     decimal Price,
     string Currency,
     string Status,
-    DateTime CreatedAt,
-    decimal? WalletBalance); // preenchido apenas no POST
+    DateTimeOffset CreatedAt,
+    decimal WalletBalance);
 
-public sealed record OrderListResponse(IReadOnlyList<OrderResponse> Items);
+public sealed record OrderListItemResponse(
+    Guid Id,
+    int ServiceId,
+    string ServiceName,
+    decimal Price,
+    string Currency,
+    string Status,
+    DateTimeOffset CreatedAt);
+
+public sealed record OrderListResponse(IReadOnlyList<OrderListItemResponse> Items);
 ```
 
 ### Decisões do contrato
@@ -519,8 +528,9 @@ Fora dos testes de propósito: estilo e navegação (pouco valor neste escopo).
 ### Estado da wallet
 
 - Concluído: regras e testes unitários de débito/crédito, persistência SQLite com migrations e seed de R$ 50,00, `GET /api/v1/wallet` e `GET /api/v1/wallet/{id}`, crédito idempotente em `POST /api/v1/wallet/credits` e testes de integração.
-- Concluído nesta etapa: tabelas e seed de serviços, `GET /api/v1/services` (somente serviços ativos), `POST /api/v1/orders`, `GET /api/v1/wallet/transactions`, débito/pedido/extrato atômicos, replay idempotente, proteção de saldo sob concorrência e testes de integração.
-- Pendente para as próximas etapas do plano: histórico opcional de pedidos, integração mobile e documentação OpenAPI/arquitetura completa.
+- Concluído nesta etapa: tabelas e seed de serviços, `GET /api/v1/services` (somente serviços ativos), `POST /api/v1/orders`, `GET /api/v1/orders`, `GET /api/v1/wallet/transactions`, débito/pedido/extrato atômicos, replay idempotente, proteção de saldo sob concorrência e testes de integração.
+- Documentação do backend: contrato OpenAPI em `docs/openapi.yaml` e arquitetura em `docs/architecture.md`.
+- Pendente para as próximas etapas do plano: integração mobile.
 
 ### Checklist de entrega
 

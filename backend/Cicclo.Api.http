@@ -9,6 +9,12 @@ GET {{baseUrl}}/api/v1/services/1
 ### Request a service that does not exist (404)
 GET {{baseUrl}}/api/v1/services/999
 
+### Get order history
+GET {{baseUrl}}/api/v1/orders
+
+### Get a specific order
+GET {{baseUrl}}/api/v1/orders/ac7495ca-9575-4127-9f01-0d8227c9c882
+
 ### Get wallet
 GET {{baseUrl}}/api/v1/wallet
 

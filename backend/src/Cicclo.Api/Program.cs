@@ -1,6 +1,7 @@
 using Cicclo.Application.Wallets.GetWallet;
 using Cicclo.Application.Wallets.CreditWallet;
 using Cicclo.Application.Orders.CreateOrder;
+using Cicclo.Application.Orders.ListOrders;
 using Cicclo.Application.Services.GetServices;
 using Cicclo.Application.Wallets.GetTransactions;
 using Cicclo.Infrastructure;
@@ -27,6 +28,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddScoped<GetWalletUseCase>();
 builder.Services.AddScoped<CreditWalletUseCase>();
 builder.Services.AddScoped<CreateOrderUseCase>();
+builder.Services.AddScoped<ListOrdersUseCase>();
 builder.Services.AddScoped<GetServicesUseCase>();
 builder.Services.AddScoped<GetWalletTransactionsUseCase>();
 builder.Services.AddInfrastructure(builder.Configuration);

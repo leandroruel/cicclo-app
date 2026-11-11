@@ -1,6 +1,7 @@
 using System.Data;
 using Cicclo.Application.Abstractions;
 using Cicclo.Application.Orders.CreateOrder;
+using Cicclo.Application.Orders.ListOrders;
 using Cicclo.Domain.Exceptions;
 using Cicclo.Domain.Orders;
 using Cicclo.Domain.Wallets;
@@ -129,6 +130,25 @@ public sealed class OrderRepository(AppDbContext dbContext) : IOrderRepository
         }
 
         return await CreateResultAsync(order, CreateOrderStatus.Created, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<OrderListItemResult>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        var orders = await dbContext.Orders
+            .AsNoTracking()
+            .Select(order => new OrderListItemResult(
+                order.Id,
+                order.ServiceId,
+                order.ServiceNameAtPurchase,
+                order.PriceAtPurchase,
+                order.Status.ToString(),
+                order.CreatedAt))
+            .ToListAsync(cancellationToken);
+
+        return orders
+            .OrderByDescending(order => order.CreatedAt)
+            .ThenBy(order => order.Id)
+            .ToArray();
     }
 
     private async Task<CreateOrderResult> CreateResultAsync(

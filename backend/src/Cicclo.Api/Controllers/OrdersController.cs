@@ -1,13 +1,35 @@
 using Cicclo.Api.Contracts;
 using Cicclo.Application.Orders.CreateOrder;
+using Cicclo.Application.Orders.ListOrders;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cicclo.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/orders")]
-public sealed class OrdersController(CreateOrderUseCase createOrder) : ControllerBase
+public sealed class OrdersController(
+    CreateOrderUseCase createOrder,
+    ListOrdersUseCase listOrders) : ControllerBase
 {
+    [HttpGet]
+    [EndpointSummary("Lista o histórico de pedidos.")]
+    [EndpointDescription("Retorna os pedidos confirmados do mais recente para o mais antigo. A listagem não é paginada.")]
+    [ProducesResponseType<OrderListResponse>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<OrderListResponse>> GetAll(CancellationToken cancellationToken)
+    {
+        var orders = await listOrders.ExecuteAsync(cancellationToken);
+        return Ok(new OrderListResponse(
+            orders.Select(order => new OrderListItemResponse(
+                order.Id,
+                order.ServiceId,
+                order.ServiceName,
+                order.Price,
+                "BRL",
+                order.Status,
+                order.CreatedAt))
+                .ToArray()));
+    }
+
     [HttpPost]
     [ProducesResponseType<OrderResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<OrderResponse>(StatusCodes.Status200OK)]

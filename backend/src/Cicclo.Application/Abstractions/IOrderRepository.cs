@@ -1,4 +1,5 @@
 using Cicclo.Application.Orders.CreateOrder;
+using Cicclo.Application.Orders.ListOrders;
 
 namespace Cicclo.Application.Abstractions;
 
@@ -10,4 +11,6 @@ public interface IOrderRepository
         CancellationToken cancellationToken);
 
     Task<CreateOrderResult?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<OrderListItemResult>> GetAllAsync(CancellationToken cancellationToken);
 }

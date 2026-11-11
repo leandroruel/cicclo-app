@@ -30,6 +30,12 @@ curl -X POST http://localhost:5000/api/v1/orders \
   -d '{"serviceId":1}'
 ```
 
+O histórico de pedidos está disponível em `GET /api/v1/orders`, do mais recente para o mais antigo, e um pedido individual pode ser consultado em `GET /api/v1/orders/{id}`. A listagem não é paginada.
+
+```bash
+curl http://localhost:5000/api/v1/orders
+```
+
 Consulte o extrato da carteira em `GET /api/v1/wallet/transactions`. A resposta contém os lançamentos de débito associados aos pedidos, do mais recente para o mais antigo, com valor, saldo após o lançamento e horário do pedido.
 
 ```bash
@@ -58,4 +64,6 @@ O teste de integração da wallet roda com:
 dotnet test Cicclo.sln --filter FullyQualifiedName~Cicclo.Api.Tests
 ```
 
-Inicie a API em desenvolvimento a partir de `backend/src/Cicclo.Api` com `dotnet run`. As migrations são aplicadas e os dados iniciais são inseridos automaticamente. A referência OpenAPI e a interface Scalar ficam disponíveis no ambiente de desenvolvimento. A integração mobile ainda não foi implementada.
+O contrato OpenAPI e as decisões de arquitetura estão documentados em [docs/openapi.yaml](./docs/openapi.yaml) e [docs/architecture.md](./docs/architecture.md).
+
+Inicie a API em desenvolvimento a partir de `backend/src/Cicclo.Api` com `dotnet run`. As migrations são aplicadas e os dados iniciais são inseridos automaticamente. A referência OpenAPI gerada e a interface Scalar ficam disponíveis no ambiente de desenvolvimento. A integração mobile ainda não foi implementada.
