@@ -5,7 +5,7 @@ Aplicação mobile e API para simular uma lavanderia automatizada. O plano funci
 ## Estrutura
 
 - `backend/`: API ASP.NET Core e projetos organizados em Clean Architecture.
-- `mobile/`: aplicativo React Native com Expo.
+- `mobile/`: aplicativo React Native com Expo Router e TypeScript.
 - `docs/`: documentação da arquitetura e contrato da API.
 
 ## Backend
@@ -49,7 +49,31 @@ curl http://localhost:5000/api/v1/services
 curl http://localhost:5000/api/v1/services/1
 ```
 
-A integração do app ainda não foi implementada.
+### App mobile
+
+O app Expo apresenta o saldo da carteira e os serviços ativos da API. A solicitação
+de serviço exige confirmação, usa uma chave UUID de idempotência e permite repetir
+uma tentativa de rede com a mesma chave. O saldo é atualizado após a confirmação.
+O app ainda não implementa autenticação, recarga, histórico, localização ou estado
+de máquinas.
+
+Configure a URL da API e inicie o app:
+
+```bash
+cd mobile
+cp .env.example .env
+# Ajuste EXPO_PUBLIC_API_URL em .env para um endereço alcançável pelo dispositivo.
+npm install
+npm run start
+```
+
+Use `npm run android`, `npm run ios` ou `npm run web` para iniciar em uma plataforma.
+Em um dispositivo físico ou emulador Android, `localhost` pode não apontar para o
+computador que está rodando a API; use o endereço da rede local ou o endereço do
+host apropriado para o emulador.
+
+Verifique tipos, lint e testes com `npm run typecheck`, `npm run lint` e `npm test`
+na pasta `mobile/`.
 
 Com o SDK .NET 10 instalado, rode os testes de domínio:
 
@@ -66,4 +90,4 @@ dotnet test Cicclo.sln --filter FullyQualifiedName~Cicclo.Api.Tests
 
 O contrato OpenAPI e as decisões de arquitetura estão documentados em [docs/openapi.yaml](./docs/openapi.yaml) e [docs/architecture.md](./docs/architecture.md).
 
-Inicie a API em desenvolvimento a partir de `backend/src/Cicclo.Api` com `dotnet run`. As migrations são aplicadas e os dados iniciais são inseridos automaticamente. A referência OpenAPI gerada e a interface Scalar ficam disponíveis no ambiente de desenvolvimento. A integração mobile ainda não foi implementada.
+Inicie a API em desenvolvimento a partir de `backend/src/Cicclo.Api` com `dotnet run`. As migrations são aplicadas e os dados iniciais são inseridos automaticamente. A referência OpenAPI gerada e a interface Scalar ficam disponíveis no ambiente de desenvolvimento.
