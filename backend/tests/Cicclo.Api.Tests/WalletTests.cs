@@ -3,6 +3,9 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Cicclo.Api.Contracts;
 using Cicclo.Api.Tests.Infrastructure;
+using Cicclo.Domain.Wallets;
+using Cicclo.Infrastructure.Persistence;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Cicclo.Api.Tests;
@@ -23,6 +26,41 @@ public sealed class WalletTests
         Assert.Equal(Guid.Parse("5b1f0c1e-7a34-4c53-9c0e-2f6f4a1d9a10"), wallet.Id);
         Assert.Equal(50.00m, wallet.Balance);
         Assert.Equal("BRL", wallet.Currency);
+    }
+
+    [Fact]
+    public async Task GetWalletById_ReturnsMatchingWallet()
+    {
+        using var factory = new ApiFactory();
+        using var client = factory.CreateClient();
+        var walletId = Guid.NewGuid();
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            dbContext.Wallets.Add(new Wallet(walletId, 73.25m));
+            await dbContext.SaveChangesAsync();
+        }
+
+        using var response = await client.GetAsync($"/api/v1/wallet/{walletId}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var wallet = await response.Content.ReadFromJsonAsync<WalletResponse>();
+        Assert.Equal(new WalletResponse(walletId, 73.25m, "BRL"), wallet);
+    }
+
+    [Fact]
+    public async Task GetWalletById_WhenWalletDoesNotExist_ReturnsNotFound()
+    {
+        using var factory = new ApiFactory();
+        using var client = factory.CreateClient();
+        var walletId = Guid.NewGuid();
+
+        using var response = await client.GetAsync($"/api/v1/wallet/{walletId}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        using var problem = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
+        Assert.Equal("https://cicclo.app/errors/wallet-not-found", problem.RootElement.GetProperty("type").GetString());
     }
 
     [Fact]

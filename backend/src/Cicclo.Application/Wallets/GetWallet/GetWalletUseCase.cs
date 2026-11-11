@@ -10,4 +10,11 @@ public sealed class GetWalletUseCase(IWalletRepository walletRepository)
 
         return wallet is null ? null : new WalletResult(wallet.Id, wallet.Balance);
     }
+
+    public async Task<WalletResult?> ExecuteAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var wallet = await walletRepository.GetByIdAsync(id, cancellationToken);
+
+        return wallet is null ? null : new WalletResult(wallet.Id, wallet.Balance);
+    }
 }

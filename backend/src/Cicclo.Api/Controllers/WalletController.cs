@@ -26,6 +26,29 @@ public sealed class WalletController(
         return Ok(new WalletResponse(wallet.Id, wallet.Balance, "BRL"));
     }
 
+    [HttpGet("{id:guid}")]
+    [EndpointSummary("Busca uma carteira por ID.")]
+    [EndpointDescription("Retorna o saldo e a moeda da carteira com o identificador informado.")]
+    [ProducesResponseType<WalletResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<WalletResponse>> GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var wallet = await getWallet.ExecuteAsync(id, cancellationToken);
+        if (wallet is null)
+        {
+            return NotFound(new ProblemDetails
+            {
+                Type = "https://cicclo.app/errors/wallet-not-found",
+                Status = StatusCodes.Status404NotFound,
+                Title = "Carteira não encontrada",
+                Detail = "Nenhuma carteira corresponde ao identificador informado.",
+                Instance = HttpContext.Request.Path
+            });
+        }
+
+        return Ok(new WalletResponse(wallet.Id, wallet.Balance, "BRL"));
+    }
+
     [HttpPost("credits")]
     [ProducesResponseType<WalletResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]

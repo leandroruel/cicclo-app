@@ -11,6 +11,9 @@ public sealed class WalletRepository(AppDbContext dbContext) : IWalletRepository
     public Task<Wallet?> GetDefaultAsync(CancellationToken cancellationToken) =>
         dbContext.Wallets.SingleOrDefaultAsync(cancellationToken);
 
+    public Task<Wallet?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
+        dbContext.Wallets.SingleOrDefaultAsync(wallet => wallet.Id == id, cancellationToken);
+
     public async Task<WalletCreditResult> CreditAsync(
         decimal amount,
         string idempotencyKey,

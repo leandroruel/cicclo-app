@@ -12,6 +12,12 @@ GET {{baseUrl}}/api/v1/services/999
 ### Get wallet
 GET {{baseUrl}}/api/v1/wallet
 
+### Get wallet by ID
+GET {{baseUrl}}/api/v1/wallet/5b1f0c1e-7a34-4c53-9c0e-2f6f4a1d9a10
+
+### Request a wallet that does not exist (404)
+GET {{baseUrl}}/api/v1/wallet/00000000-0000-0000-0000-000000000000
+
 ### Get wallet transactions
 GET {{baseUrl}}/api/v1/wallet/transactions
 

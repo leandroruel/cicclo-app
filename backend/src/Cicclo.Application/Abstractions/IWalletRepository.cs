@@ -7,6 +7,8 @@ public interface IWalletRepository
 {
     Task<Wallet?> GetDefaultAsync(CancellationToken cancellationToken);
 
+    Task<Wallet?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+
     Task<WalletCreditResult> CreditAsync(
         decimal amount,
         string idempotencyKey,
