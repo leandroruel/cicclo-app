@@ -19,6 +19,7 @@ describe('requestService', () => {
     const createOrder = vi.fn(async () => order);
     const gateway: LaundryGateway = {
       getWallet: vi.fn(),
+      getWalletTransactions: vi.fn(),
       listServices: vi.fn(),
       creditWallet: vi.fn(),
       createOrder,
@@ -39,6 +40,7 @@ describe('requestService', () => {
     const error = new Error('Insufficient balance');
     const gateway: LaundryGateway = {
       getWallet: vi.fn(),
+      getWalletTransactions: vi.fn(),
       listServices: vi.fn(),
       creditWallet: vi.fn(),
       createOrder: vi.fn(async () => {

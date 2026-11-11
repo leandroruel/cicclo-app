@@ -6,5 +6,5 @@ public sealed record WalletTransactionResponse(
     string Type,
     decimal Amount,
     decimal BalanceAfter,
-    Guid OrderId,
+    Guid? OrderId,
     DateTimeOffset CreatedAt);

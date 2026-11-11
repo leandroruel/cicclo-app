@@ -14,6 +14,7 @@ describe('creditWallet', () => {
     const gatewayCredit = vi.fn(async () => wallet);
     const gateway: LaundryGateway = {
       getWallet: vi.fn(),
+      getWalletTransactions: vi.fn(),
       listServices: vi.fn(),
       creditWallet: gatewayCredit,
       createOrder: vi.fn(),

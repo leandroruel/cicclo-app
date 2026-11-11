@@ -13,6 +13,7 @@ public sealed class WalletCredit
         IdempotencyKey = idempotencyKey;
         Amount = amount;
         BalanceAfter = balanceAfter;
+        CreatedAt = DateTimeOffset.UtcNow;
     }
 
     public Guid Id { get; private set; }
@@ -24,4 +25,6 @@ public sealed class WalletCredit
     public decimal Amount { get; private set; }
 
     public decimal BalanceAfter { get; private set; }
+
+    public DateTimeOffset CreatedAt { get; private set; }
 }

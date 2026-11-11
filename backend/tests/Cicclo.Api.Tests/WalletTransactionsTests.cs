@@ -23,6 +23,33 @@ public sealed class WalletTransactionsTests
     }
 
     [Fact]
+    public async Task GetTransactions_IncludesWalletCreditsWithoutOrderReference()
+    {
+        using var factory = new ApiFactory();
+        using var client = factory.CreateClient();
+        using var creditRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/wallet/credits")
+        {
+            Content = JsonContent.Create(new CreditWalletRequest { Amount = 25m })
+        };
+        creditRequest.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString());
+
+        using var creditResponse = await client.SendAsync(creditRequest);
+        Assert.Equal(HttpStatusCode.OK, creditResponse.StatusCode);
+
+        using var response = await client.GetAsync("/api/v1/wallet/transactions");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<WalletTransactionListResponse>();
+        Assert.NotNull(result);
+        var credit = Assert.Single(result.Items);
+        Assert.Equal("Credit", credit.Type);
+        Assert.Equal(25m, credit.Amount);
+        Assert.Equal(75m, credit.BalanceAfter);
+        Assert.Null(credit.OrderId);
+        Assert.NotEqual(default, credit.CreatedAt);
+    }
+
+    [Fact]
     public async Task GetTransactions_ReturnsOrderDebitsNewestFirstWithBalancesAndOrderReferences()
     {
         using var factory = new ApiFactory();

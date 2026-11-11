@@ -2,6 +2,7 @@ import type { LaundryGateway } from '../../application/ports/LaundryGateway';
 import type { LaundryService } from '../../domain/laundryService';
 import type { Order } from '../../domain/order';
 import type { Wallet } from '../../domain/wallet';
+import type { WalletTransaction } from '../../domain/walletTransaction';
 import { requestJson } from '../http/httpClient';
 
 function isWallet(value: unknown): value is Wallet {
@@ -55,6 +56,25 @@ function isOrder(value: unknown): value is Order {
   );
 }
 
+function isWalletTransaction(value: unknown): value is WalletTransaction {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    typeof value.id === 'string' &&
+    'type' in value &&
+    (value.type === 'Credit' || value.type === 'Debit') &&
+    'amount' in value &&
+    typeof value.amount === 'number' &&
+    'balanceAfter' in value &&
+    typeof value.balanceAfter === 'number' &&
+    'orderId' in value &&
+    (typeof value.orderId === 'string' || value.orderId === null) &&
+    'createdAt' in value &&
+    typeof value.createdAt === 'string'
+  );
+}
+
 export class LaundryApiGateway implements LaundryGateway {
   async getWallet(signal?: AbortSignal): Promise<Wallet> {
     const response = await requestJson('/api/v1/wallet', { signal });
@@ -75,6 +95,23 @@ export class LaundryApiGateway implements LaundryGateway {
       !response.items.every(isLaundryService)
     ) {
       throw new Error('A API retornou dados inválidos para os serviços.');
+    }
+
+    return response.items;
+  }
+
+  async getWalletTransactions(
+    signal?: AbortSignal,
+  ): Promise<readonly WalletTransaction[]> {
+    const response = await requestJson('/api/v1/wallet/transactions', { signal });
+    if (
+      typeof response !== 'object' ||
+      response === null ||
+      !('items' in response) ||
+      !Array.isArray(response.items) ||
+      !response.items.every(isWalletTransaction)
+    ) {
+      throw new Error('A API retornou dados inválidos para o histórico da carteira.');
     }
 
     return response.items;

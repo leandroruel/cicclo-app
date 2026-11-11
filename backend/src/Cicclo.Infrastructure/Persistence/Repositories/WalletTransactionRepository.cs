@@ -1,5 +1,6 @@
 using Cicclo.Application.Abstractions;
 using Cicclo.Application.Wallets.GetTransactions;
+using Cicclo.Domain.Wallets;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cicclo.Infrastructure.Persistence.Repositories;
@@ -18,7 +19,7 @@ public sealed class WalletTransactionRepository(AppDbContext dbContext) : IWalle
             return [];
         }
 
-        var transactions = await (
+        var debits = await (
             from transaction in dbContext.WalletTransactions.AsNoTracking()
             join order in dbContext.Orders.AsNoTracking()
                 on transaction.OrderId equals order.Id
@@ -32,7 +33,20 @@ public sealed class WalletTransactionRepository(AppDbContext dbContext) : IWalle
                 order.CreatedAt))
             .ToListAsync(cancellationToken);
 
-        return transactions
+        var credits = await dbContext.WalletCredits
+            .AsNoTracking()
+            .Where(credit => credit.WalletId == walletId.Value)
+            .Select(credit => new WalletTransactionResult(
+                credit.Id,
+                WalletTransactionType.Credit,
+                credit.Amount,
+                credit.BalanceAfter,
+                null,
+                credit.CreatedAt))
+            .ToListAsync(cancellationToken);
+
+        return debits
+            .Concat(credits)
             .OrderByDescending(transaction => transaction.CreatedAt)
             .ThenBy(transaction => transaction.Id)
             .ToArray();

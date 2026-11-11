@@ -25,5 +25,7 @@ public sealed class WalletCreditConfiguration : IEntityTypeConfiguration<WalletC
         builder.Property(credit => credit.BalanceAfter)
             .HasPrecision(18, 2)
             .IsRequired();
+        builder.Property(credit => credit.CreatedAt)
+            .IsRequired();
     }
 }

@@ -2,7 +2,8 @@ namespace Cicclo.Domain.Wallets;
 
 public enum WalletTransactionType
 {
-    Debit
+    Debit,
+    Credit
 }
 
 public sealed class WalletTransaction

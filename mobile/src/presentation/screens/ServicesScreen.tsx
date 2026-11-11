@@ -6,7 +6,10 @@ import {
   Eye,
   EyeOff,
   Plus,
+  Wallet,
   X,
+  ArrowDownLeft,
+  ArrowUpRight,
 } from 'lucide-react-native';
 import {
   Animated,
@@ -31,6 +34,7 @@ import {
   useRequestService,
   useServices,
   useWallet,
+  useWalletTransactions,
 } from '../hooks/useLaundryData';
 
 interface RequestIntent {
@@ -148,6 +152,8 @@ export function ServicesScreen() {
   const servicesOffset = useRef(0);
   const wallet = useWallet();
   const services = useServices();
+  const [walletHistoryVisible, setWalletHistoryVisible] = useState(false);
+  const transactions = useWalletTransactions(walletHistoryVisible);
   const request = useRequestService();
   const credit = useCreditWallet();
   const [selectedService, setSelectedService] = useState<LaundryService | null>(null);
@@ -164,7 +170,15 @@ export function ServicesScreen() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refresh = () => {
-    void Promise.all([wallet.refetch(), services.refetch()]);
+    void Promise.all([
+      wallet.refetch(),
+      services.refetch(),
+      transactions.refetch(),
+    ]);
+  };
+
+  const refreshWalletHistory = () => {
+    void Promise.all([wallet.refetch(), transactions.refetch()]);
   };
 
   const dismissToast = useCallback(() => {
@@ -206,6 +220,12 @@ export function ServicesScreen() {
   useEffect(() => {
     if (credit.isError) showToast('error', requestErrorMessage(credit.error));
   }, [credit.error, credit.isError, showToast]);
+
+  useEffect(() => {
+    if (transactions.isError) {
+      showToast('error', requestErrorMessage(transactions.error));
+    }
+  }, [showToast, transactions.error, transactions.isError]);
 
   const dismissConfirmation = () => {
     setSelectedService(null);
@@ -275,7 +295,11 @@ export function ServicesScreen() {
         ]}
         refreshControl={
           <RefreshControl
-            refreshing={wallet.isRefetching || services.isRefetching}
+            refreshing={
+              wallet.isRefetching ||
+              services.isRefetching ||
+              transactions.isRefetching
+            }
             onRefresh={refresh}
             tintColor={colors.purple}
           />
@@ -358,84 +382,179 @@ export function ServicesScreen() {
             servicesOffset.current = event.nativeEvent.layout.y;
           }}
         >
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={styles.sectionEyebrow}>CUIDADO CICCLO</Text>
-              <Text style={styles.sectionTitle}>Serviços disponíveis</Text>
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Atualizar serviços"
-              onPress={refresh}
-              style={styles.refreshButton}
-            >
-              <Text style={styles.refreshButtonText}>↻</Text>
-            </Pressable>
-          </View>
-
-          {services.isPending ? (
-            <View style={styles.loadingCard}>
-              <ActivityIndicator color={colors.purple} />
-              <Text style={styles.loadingText}>Buscando serviços...</Text>
-            </View>
-          ) : services.isError ? (
-            <View style={styles.loadingCard}>
-              <Text style={styles.loadingText}>Serviços indisponíveis.</Text>
-              <Pressable accessibilityRole="button" onPress={() => void services.refetch()}>
-                <Text style={styles.retryText}>Tentar novamente</Text>
-              </Pressable>
-            </View>
-          ) : services.data.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyTitle}>Nenhum serviço disponível</Text>
-              <Text style={styles.emptyText}>
-                Volte em breve para conferir as opções da Cicclo.
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.serviceGrid}>
-              {services.data.map((service, index) => (
+          {walletHistoryVisible ? (
+            <>
+              <View style={styles.sectionHeader}>
+                <View>
+                  <Text style={styles.sectionEyebrow}>SUA CONTA</Text>
+                  <Text style={styles.sectionTitle}>Histórico da carteira</Text>
+                </View>
                 <Pressable
-                  key={service.id}
                   accessibilityRole="button"
-                  accessibilityLabel={`Solicitar ${service.name} por ${formatCurrency(service.price, service.currency)}`}
-                  onPress={() => {
-                    setIntent(null);
-                    setSelectedService(service);
-                    request.reset();
-                  }}
-                  style={({ pressed }) => [
-                    styles.serviceCard,
-                    index % 2 === 1 && styles.serviceCardAlternate,
-                    pressed && styles.pressed,
-                  ]}
+                  accessibilityLabel="Atualizar histórico"
+                  onPress={refreshWalletHistory}
+                  style={styles.refreshButton}
                 >
-                  <View
-                    style={[
-                      styles.serviceIcon,
-                      index % 2 === 1 && styles.serviceIconAlternate,
-                    ]}
-                  >
-                    <Image
-                      accessibilityLabel={service.name}
-                      resizeMode="contain"
-                      source={serviceIcon(service)}
-                      style={styles.serviceImage}
-                    />
-                  </View>
-                  <Text numberOfLines={1} style={styles.serviceName}>
-                    {service.name}
-                  </Text>
-                  <Text style={styles.serviceAvailability}>Disponível agora</Text>
-                  <View style={styles.serviceBottomRow}>
-                    <Text style={styles.servicePrice}>
-                      {formatCurrency(service.price, service.currency)}
-                    </Text>
-                    <Text style={styles.serviceArrow}>›</Text>
-                  </View>
+                  <Text style={styles.refreshButtonText}>↻</Text>
                 </Pressable>
-              ))}
-            </View>
+              </View>
+              {transactions.isPending ? (
+                <View style={styles.loadingCard}>
+                  <ActivityIndicator color={colors.purple} />
+                  <Text style={styles.loadingText}>Carregando transações...</Text>
+                </View>
+              ) : transactions.isError ? (
+                <View style={styles.loadingCard}>
+                  <Text style={styles.loadingText}>Não foi possível carregar o histórico.</Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => void transactions.refetch()}
+                  >
+                    <Text style={styles.retryText}>Tentar novamente</Text>
+                  </Pressable>
+                </View>
+              ) : transactions.data.length === 0 ? (
+                <View style={styles.emptyCard}>
+                  <Wallet color={colors.purple} size={27} />
+                  <Text style={styles.emptyTitle}>Nenhuma transação ainda</Text>
+                  <Text style={styles.emptyText}>
+                    Seus créditos e serviços utilizados aparecerão aqui.
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.transactionList}>
+                  {transactions.data.map((transaction) => {
+                    const isCredit = transaction.type === 'Credit';
+                    const transactionDate = new Date(transaction.createdAt);
+                    return (
+                      <View key={transaction.id} style={styles.transactionCard}>
+                        <View
+                          style={[
+                            styles.transactionIcon,
+                            isCredit
+                              ? styles.transactionCreditIcon
+                              : styles.transactionDebitIcon,
+                          ]}
+                        >
+                          {isCredit ? (
+                            <ArrowDownLeft color={colors.credit} size={20} />
+                          ) : (
+                            <ArrowUpRight color={colors.debit} size={20} />
+                          )}
+                        </View>
+                        <View style={styles.transactionDetails}>
+                          <Text style={styles.transactionTitle}>
+                            {isCredit ? 'Crédito adicionado' : 'Serviço utilizado'}
+                          </Text>
+                          <Text style={styles.transactionDate}>
+                            {transactionDate.toLocaleString('pt-BR', {
+                              dateStyle: 'short',
+                              timeStyle: 'short',
+                            })}
+                          </Text>
+                          <Text style={styles.transactionBalance}>
+                            Saldo após: {formatCurrency(transaction.balanceAfter)}
+                          </Text>
+                        </View>
+                        <Text
+                          style={[
+                            styles.transactionAmount,
+                            isCredit
+                              ? styles.transactionAmountCredit
+                              : styles.transactionAmountDebit,
+                          ]}
+                        >
+                          {isCredit ? '+' : '-'}
+                          {formatCurrency(transaction.amount)}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+            </>
+          ) : (
+            <>
+              <View style={styles.sectionHeader}>
+                <View>
+                  <Text style={styles.sectionEyebrow}>CUIDADO CICCLO</Text>
+                  <Text style={styles.sectionTitle}>Serviços disponíveis</Text>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Atualizar serviços"
+                  onPress={refresh}
+                  style={styles.refreshButton}
+                >
+                  <Text style={styles.refreshButtonText}>↻</Text>
+                </Pressable>
+              </View>
+
+              {services.isPending ? (
+                <View style={styles.loadingCard}>
+                  <ActivityIndicator color={colors.purple} />
+                  <Text style={styles.loadingText}>Buscando serviços...</Text>
+                </View>
+              ) : services.isError ? (
+                <View style={styles.loadingCard}>
+                  <Text style={styles.loadingText}>Serviços indisponíveis.</Text>
+                  <Pressable accessibilityRole="button" onPress={() => void services.refetch()}>
+                    <Text style={styles.retryText}>Tentar novamente</Text>
+                  </Pressable>
+                </View>
+              ) : services.data.length === 0 ? (
+                <View style={styles.emptyCard}>
+                  <Text style={styles.emptyTitle}>Nenhum serviço disponível</Text>
+                  <Text style={styles.emptyText}>
+                    Volte em breve para conferir as opções da Cicclo.
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.serviceGrid}>
+                  {services.data.map((service, index) => (
+                    <Pressable
+                      key={service.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Solicitar ${service.name} por ${formatCurrency(service.price, service.currency)}`}
+                      onPress={() => {
+                        setIntent(null);
+                        setSelectedService(service);
+                        request.reset();
+                      }}
+                      style={({ pressed }) => [
+                        styles.serviceCard,
+                        index % 2 === 1 && styles.serviceCardAlternate,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.serviceIcon,
+                          index % 2 === 1 && styles.serviceIconAlternate,
+                        ]}
+                      >
+                        <Image
+                          accessibilityLabel={service.name}
+                          resizeMode="contain"
+                          source={serviceIcon(service)}
+                          style={styles.serviceImage}
+                        />
+                      </View>
+                      <Text numberOfLines={1} style={styles.serviceName}>
+                        {service.name}
+                      </Text>
+                      <Text style={styles.serviceAvailability}>Disponível agora</Text>
+                      <View style={styles.serviceBottomRow}>
+                        <Text style={styles.servicePrice}>
+                          {formatCurrency(service.price, service.currency)}
+                        </Text>
+                        <Text style={styles.serviceArrow}>›</Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </>
           )}
         </View>
       </ScrollView>
@@ -445,7 +564,10 @@ export function ServicesScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Início"
-            onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
+            onPress={() => {
+              setWalletHistoryVisible(false);
+              scrollRef.current?.scrollTo({ y: 0, animated: true });
+            }}
             style={styles.navItem}
           >
             <Text style={[styles.navIcon, styles.navIconActive]}>⌂</Text>
@@ -455,7 +577,10 @@ export function ServicesScreen() {
             accessibilityRole="button"
             accessibilityLabel="Ir para serviços"
             onPress={() =>
-              scrollRef.current?.scrollTo({ y: servicesOffset.current, animated: true })
+              {
+                setWalletHistoryVisible(false);
+                scrollRef.current?.scrollTo({ y: servicesOffset.current, animated: true });
+              }
             }
             style={styles.navItem}
           >
@@ -464,12 +589,26 @@ export function ServicesScreen() {
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Atualizar saldo e serviços"
-            onPress={refresh}
+            accessibilityLabel="Carteira e histórico de transações"
+            accessibilityState={{ selected: walletHistoryVisible }}
+            onPress={() => {
+              setWalletHistoryVisible(true);
+            }}
             style={styles.navItem}
           >
-            <Text style={styles.navIcon}>↻</Text>
-            <Text style={styles.navLabel}>Atualizar</Text>
+            <Wallet
+              color={walletHistoryVisible ? colors.purple : colors.navMuted}
+              size={20}
+              strokeWidth={2}
+            />
+            <Text
+              style={[
+                styles.navLabel,
+                walletHistoryVisible && styles.navLabelActive,
+              ]}
+            >
+              Carteira
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -647,6 +786,11 @@ const colors = {
   surface: '#FAFAFB',
   border: '#EFEEF1',
   green: '#37863F',
+  credit: '#278248',
+  debit: '#C64B3F',
+  creditBackground: '#EAF7EF',
+  debitBackground: '#FFF0ED',
+  navMuted: '#A8A6AE',
   toastSuccessBackground: '#F0FAF3',
   toastSuccessBorder: '#CDEBD5',
   toastSuccessIcon: '#278248',
@@ -947,6 +1091,61 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     marginTop: 6,
+  },
+  transactionList: {
+    gap: 10,
+  },
+  transactionCard: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderColor: colors.border,
+    borderRadius: 15,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 11,
+    paddingHorizontal: 12,
+    paddingVertical: 13,
+  },
+  transactionIcon: {
+    alignItems: 'center',
+    borderRadius: 22,
+    height: 42,
+    justifyContent: 'center',
+    width: 42,
+  },
+  transactionCreditIcon: {
+    backgroundColor: colors.creditBackground,
+  },
+  transactionDebitIcon: {
+    backgroundColor: colors.debitBackground,
+  },
+  transactionDetails: {
+    flex: 1,
+  },
+  transactionTitle: {
+    color: colors.ink,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  transactionDate: {
+    color: colors.muted,
+    fontSize: 10,
+    marginTop: 3,
+  },
+  transactionBalance: {
+    color: colors.muted,
+    fontSize: 10,
+    marginTop: 4,
+  },
+  transactionAmount: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  transactionAmountCredit: {
+    color: colors.credit,
+  },
+  transactionAmountDebit: {
+    color: colors.debit,
   },
   serviceGrid: {
     flexDirection: 'row',

@@ -43,6 +43,35 @@ describe('LaundryApiGateway', () => {
     );
   });
 
+  it('loads wallet transactions including credits without an order reference', async () => {
+    vi.stubEnv('EXPO_PUBLIC_API_URL', 'https://api.cicclo.test/');
+    const transactions = [
+      {
+        id: idempotencyKey,
+        type: 'Credit',
+        amount: 25,
+        balanceAfter: 75,
+        orderId: null,
+        createdAt: '2026-01-01T10:00:00Z',
+      },
+    ];
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({ items: transactions }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(new LaundryApiGateway().getWalletTransactions()).resolves.toEqual(
+      transactions,
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.cicclo.test/api/v1/wallet/transactions',
+      expect.objectContaining({ method: 'GET' }),
+    );
+  });
+
   it('sends an idempotent wallet credit request and returns the credited wallet', async () => {
     vi.stubEnv('EXPO_PUBLIC_API_URL', 'https://api.cicclo.test/');
     const fetchMock = vi.fn(async () =>
