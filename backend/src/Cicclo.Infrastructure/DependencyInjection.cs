@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<IWalletRepository, WalletRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IServiceRepository, ServiceRepository>();
+        services.AddScoped<IWalletTransactionRepository, WalletTransactionRepository>();
 
         return services;
     }

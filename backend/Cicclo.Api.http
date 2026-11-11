@@ -12,6 +12,9 @@ GET {{baseUrl}}/api/v1/services/999
 ### Get wallet
 GET {{baseUrl}}/api/v1/wallet
 
+### Get wallet transactions
+GET {{baseUrl}}/api/v1/wallet/transactions
+
 ### Add R$ 50.00 to the wallet
 POST {{baseUrl}}/api/v1/wallet/credits
 Idempotency-Key: wallet-credit-50-example

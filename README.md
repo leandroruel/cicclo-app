@@ -30,6 +30,12 @@ curl -X POST http://localhost:5000/api/v1/orders \
   -d '{"serviceId":1}'
 ```
 
+Consulte o extrato da carteira em `GET /api/v1/wallet/transactions`. A resposta contém os lançamentos de débito associados aos pedidos, do mais recente para o mais antigo, com valor, saldo após o lançamento e horário do pedido.
+
+```bash
+curl http://localhost:5000/api/v1/wallet/transactions
+```
+
 Os serviços Lavagem e Secagem são seedados na base. Consulte os serviços ativos em `GET /api/v1/services` ou busque um serviço ativo por ID em `GET /api/v1/services/{id}`. IDs inexistentes ou inativos retornam `404`:
 
 ```bash
