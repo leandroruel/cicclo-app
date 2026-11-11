@@ -24,6 +24,7 @@ import {
   StyleSheet,
   Text,
   View,
+  type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppError } from '../../domain/errors';
@@ -143,6 +144,68 @@ function ToastBanner({
         <X color={colors.muted} size={18} />
       </Pressable>
     </Animated.View>
+  );
+}
+
+function SkeletonBlock({ style }: { style: ViewStyle }) {
+  const [opacity] = useState(() => new Animated.Value(0.55));
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 0.9,
+          duration: 700,
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.55,
+          duration: 700,
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ]),
+    );
+    animation.start();
+
+    return () => animation.stop();
+  }, [opacity]);
+
+  return <Animated.View style={[styles.skeletonBlock, style, { opacity }]} />;
+}
+
+function ServiceCardSkeleton({ alternate = false }: { alternate?: boolean }) {
+  return (
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[styles.serviceCard, alternate && styles.serviceCardAlternate]}
+    >
+      <SkeletonBlock style={styles.serviceIconSkeleton} />
+      <SkeletonBlock style={styles.serviceNameSkeleton} />
+      <SkeletonBlock style={styles.serviceAvailabilitySkeleton} />
+      <View style={styles.serviceBottomRow}>
+        <SkeletonBlock style={styles.servicePriceSkeleton} />
+        <SkeletonBlock style={styles.serviceArrowSkeleton} />
+      </View>
+    </View>
+  );
+}
+
+function TransactionSkeleton() {
+  return (
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={styles.transactionCard}
+    >
+      <SkeletonBlock style={styles.transactionIconSkeleton} />
+      <View style={styles.transactionSkeletonDetails}>
+        <SkeletonBlock style={styles.transactionTitleSkeleton} />
+        <SkeletonBlock style={styles.transactionDateSkeleton} />
+        <SkeletonBlock style={styles.transactionBalanceSkeleton} />
+      </View>
+      <SkeletonBlock style={styles.transactionAmountSkeleton} />
+    </View>
   );
 }
 
@@ -338,11 +401,7 @@ export function ServicesScreen() {
             <View style={styles.balanceTextGroup}>
               <Text style={styles.balanceLabel}>MEU SALDO</Text>
               {wallet.isPending ? (
-                <ActivityIndicator
-                  accessibilityLabel="Carregando saldo"
-                  color={colors.purple}
-                  style={styles.balanceLoader}
-                />
+                <SkeletonBlock style={styles.balanceSkeleton} />
               ) : wallet.isError ? (
                 <Text style={styles.balanceError}>Indisponível</Text>
               ) : (
@@ -376,6 +435,20 @@ export function ServicesScreen() {
           </Pressable>
         </View>
 
+        {(wallet.isPending || services.isPending) && (
+          <View
+            accessibilityLiveRegion="polite"
+            style={styles.connectionStatus}
+          >
+            <ActivityIndicator color={colors.purple} size="small" />
+            <Text style={styles.connectionStatusText}>
+              {Math.max(wallet.failureCount, services.failureCount) > 0
+                ? 'A API está demorando. Tentando novamente…'
+                : 'Conectando à API…'}
+            </Text>
+          </View>
+        )}
+
         <View
           style={styles.section}
           onLayout={(event) => {
@@ -399,9 +472,10 @@ export function ServicesScreen() {
                 </Pressable>
               </View>
               {transactions.isPending ? (
-                <View style={styles.loadingCard}>
-                  <ActivityIndicator color={colors.purple} />
-                  <Text style={styles.loadingText}>Carregando transações...</Text>
+                <View style={styles.transactionList}>
+                  <TransactionSkeleton />
+                  <TransactionSkeleton />
+                  <TransactionSkeleton />
                 </View>
               ) : transactions.isError ? (
                 <View style={styles.loadingCard}>
@@ -491,9 +565,9 @@ export function ServicesScreen() {
               </View>
 
               {services.isPending ? (
-                <View style={styles.loadingCard}>
-                  <ActivityIndicator color={colors.purple} />
-                  <Text style={styles.loadingText}>Buscando serviços...</Text>
+                <View style={styles.serviceGrid}>
+                  <ServiceCardSkeleton />
+                  <ServiceCardSkeleton alternate />
                 </View>
               ) : services.isError ? (
                 <View style={styles.loadingCard}>
@@ -968,6 +1042,11 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginTop: 5,
   },
+  balanceSkeleton: {
+    height: 19,
+    marginTop: 5,
+    width: 118,
+  },
   balanceError: {
     color: '#A33428',
     fontSize: 14,
@@ -1029,6 +1108,18 @@ const styles = StyleSheet.create({
   section: {
     marginTop: 2,
   },
+  connectionStatus: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 18,
+    marginTop: -13,
+    paddingLeft: 4,
+  },
+  connectionStatusText: {
+    color: colors.muted,
+    fontSize: 11,
+  },
   sectionHeader: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -1074,6 +1165,10 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 13,
   },
+  skeletonBlock: {
+    backgroundColor: '#EEEAF2',
+    borderRadius: 8,
+  },
   emptyCard: {
     backgroundColor: '#FFFFFF',
     borderColor: colors.border,
@@ -1105,6 +1200,32 @@ const styles = StyleSheet.create({
     gap: 11,
     paddingHorizontal: 12,
     paddingVertical: 13,
+  },
+  transactionIconSkeleton: {
+    borderRadius: 22,
+    height: 42,
+    width: 42,
+  },
+  transactionSkeletonDetails: {
+    flex: 1,
+  },
+  transactionTitleSkeleton: {
+    height: 13,
+    width: '65%',
+  },
+  transactionDateSkeleton: {
+    height: 10,
+    marginTop: 7,
+    width: '45%',
+  },
+  transactionBalanceSkeleton: {
+    height: 10,
+    marginTop: 7,
+    width: '55%',
+  },
+  transactionAmountSkeleton: {
+    height: 13,
+    width: 54,
   },
   transactionIcon: {
     alignItems: 'center',
@@ -1170,6 +1291,29 @@ const styles = StyleSheet.create({
   },
   serviceCardAlternate: {
     backgroundColor: '#FFFFFF',
+  },
+  serviceIconSkeleton: {
+    borderRadius: 34,
+    height: 68,
+    marginBottom: 10,
+    width: 68,
+  },
+  serviceNameSkeleton: {
+    height: 13,
+    width: '68%',
+  },
+  serviceAvailabilitySkeleton: {
+    height: 10,
+    marginTop: 6,
+    width: '78%',
+  },
+  servicePriceSkeleton: {
+    height: 12,
+    width: 52,
+  },
+  serviceArrowSkeleton: {
+    height: 16,
+    width: 12,
   },
   serviceIcon: {
     alignItems: 'center',

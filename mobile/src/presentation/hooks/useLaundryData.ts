@@ -5,6 +5,10 @@ import { listServices } from '../../application/useCases/listServices';
 import { listWalletTransactions } from '../../application/useCases/listWalletTransactions';
 import { requestService } from '../../application/useCases/requestService';
 import { laundryGateway } from '../../di/container';
+import {
+  getApiRetryDelay,
+  shouldRetryApiRequest,
+} from '../../infrastructure/http/apiQueryRetry';
 
 export const walletQueryKey = ['wallet'] as const;
 export const servicesQueryKey = ['services'] as const;
@@ -15,6 +19,8 @@ export function useWallet() {
   return useQuery({
     queryKey: walletQueryKey,
     queryFn: ({ signal }) => getWallet(laundryGateway, signal),
+    retry: shouldRetryApiRequest,
+    retryDelay: getApiRetryDelay,
   });
 }
 
@@ -22,6 +28,8 @@ export function useServices() {
   return useQuery({
     queryKey: servicesQueryKey,
     queryFn: ({ signal }) => listServices(laundryGateway, signal),
+    retry: shouldRetryApiRequest,
+    retryDelay: getApiRetryDelay,
   });
 }
 
@@ -30,6 +38,8 @@ export function useWalletTransactions(enabled = true) {
     queryKey: walletTransactionsQueryKey,
     queryFn: ({ signal }) => listWalletTransactions(laundryGateway, signal),
     enabled,
+    retry: shouldRetryApiRequest,
+    retryDelay: getApiRetryDelay,
   });
 }
 
