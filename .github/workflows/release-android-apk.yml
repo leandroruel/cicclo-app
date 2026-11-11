@@ -1,0 +1,63 @@
+name: Build and release Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: GitHub Release tag
+        required: true
+        default: v1.0.0
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm ci
+
+      - name: Generate Android project
+        working-directory: mobile
+        run: npx expo prebuild --platform android --no-install --clean
+
+      - name: Build signed APK for demonstration
+        working-directory: mobile/android
+        env:
+          EXPO_PUBLIC_API_URL: https://cicclo-api-i6xd.onrender.com
+        run: ./gradlew --no-daemon assembleRelease
+
+      - name: Name APK
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: cp mobile/android/app/build/outputs/apk/release/app-release.apk "Cicclo-${RELEASE_TAG}.apk"
+
+      - name: Publish APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.release_tag }}
+          name: Cicclo ${{ inputs.release_tag }}
+          body: |
+            APK Android para demonstração, configurado para a API hospedada no Render Free.
+
+            Este APK usa a chave de assinatura de debug e a API pública não possui autenticação. Não use para produção.
+          files: Cicclo-*.apk
