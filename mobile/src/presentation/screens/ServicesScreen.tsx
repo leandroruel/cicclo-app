@@ -1,10 +1,19 @@
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Crypto from 'expo-crypto';
-import { Eye, EyeOff, Plus } from 'lucide-react-native';
 import {
+  CheckCircle2,
+  CircleAlert,
+  Eye,
+  EyeOff,
+  Plus,
+  X,
+} from 'lucide-react-native';
+import {
+  Animated,
   ActivityIndicator,
   Image,
   Modal,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -16,7 +25,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppError } from '../../domain/errors';
 import type { LaundryService } from '../../domain/laundryService';
-import type { Order } from '../../domain/order';
 import { formatCurrency } from '../formatters/currency';
 import {
   useCreditWallet,
@@ -28,6 +36,12 @@ import {
 interface RequestIntent {
   serviceId: number;
   idempotencyKey: string;
+}
+
+interface ToastMessage {
+  id: number;
+  type: 'success' | 'error';
+  message: string;
 }
 
 function requestErrorMessage(error: unknown): string {
@@ -68,20 +82,63 @@ function serviceIcon(service: LaundryService): number {
     : require('../../../assets/laundry.png');
 }
 
-function ErrorNotice({
-  message,
-  onRetry,
+function ToastBanner({
+  toast,
+  top,
+  onDismiss,
 }: {
-  message: string;
-  onRetry: () => void;
+  toast: ToastMessage;
+  top: number;
+  onDismiss: () => void;
 }) {
+  const [translateY] = useState(() => new Animated.Value(-100));
+  const [opacity] = useState(() => new Animated.Value(0));
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 280,
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: Platform.OS !== 'web',
+      }),
+    ]).start();
+
+    return () => {
+      translateY.stopAnimation();
+      opacity.stopAnimation();
+    };
+  }, [opacity, translateY]);
+
   return (
-    <View style={styles.errorCard}>
-      <Text style={styles.errorText}>{message}</Text>
-      <Pressable accessibilityRole="button" onPress={onRetry}>
-        <Text style={styles.retryText}>Tentar novamente</Text>
+    <Animated.View
+      accessibilityRole="alert"
+      style={[
+        styles.toast,
+        toast.type === 'success' ? styles.toastSuccess : styles.toastError,
+        { top, opacity, transform: [{ translateY }] },
+      ]}
+    >
+      {toast.type === 'success' ? (
+        <CheckCircle2 color={colors.toastSuccessIcon} size={22} />
+      ) : (
+        <CircleAlert color={colors.toastErrorIcon} size={22} />
+      )}
+      <Text style={styles.toastMessage}>{toast.message}</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Fechar notificação"
+        hitSlop={8}
+        onPress={onDismiss}
+        style={styles.toastDismiss}
+      >
+        <X color={colors.muted} size={18} />
       </Pressable>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -95,19 +152,60 @@ export function ServicesScreen() {
   const credit = useCreditWallet();
   const [selectedService, setSelectedService] = useState<LaundryService | null>(null);
   const [intent, setIntent] = useState<RequestIntent | null>(null);
-  const [confirmedOrder, setConfirmedOrder] = useState<Order | null>(null);
   const [creditModalVisible, setCreditModalVisible] = useState(false);
   const [selectedCreditAmount, setSelectedCreditAmount] = useState(25);
   const [creditIntent, setCreditIntent] = useState<{
     amount: number;
     idempotencyKey: string;
   } | null>(null);
-  const [creditedAmount, setCreditedAmount] = useState<number | null>(null);
   const [balanceVisible, setBalanceVisible] = useState(true);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+  const toastId = useRef(0);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refresh = () => {
     void Promise.all([wallet.refetch(), services.refetch()]);
   };
+
+  const dismissToast = useCallback(() => {
+    if (toastTimer.current) {
+      clearTimeout(toastTimer.current);
+      toastTimer.current = null;
+    }
+    setToast(null);
+  }, []);
+
+  const showToast = useCallback(
+    (type: ToastMessage['type'], message: string) => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+      setToast({ id: ++toastId.current, type, message });
+      toastTimer.current = setTimeout(dismissToast, 3500);
+    },
+    [dismissToast],
+  );
+
+  useEffect(
+    () => () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (wallet.isError) showToast('error', requestErrorMessage(wallet.error));
+  }, [showToast, wallet.error, wallet.isError]);
+
+  useEffect(() => {
+    if (services.isError) showToast('error', requestErrorMessage(services.error));
+  }, [services.error, services.isError, showToast]);
+
+  useEffect(() => {
+    if (request.isError) showToast('error', requestErrorMessage(request.error));
+  }, [request.error, request.isError, showToast]);
+
+  useEffect(() => {
+    if (credit.isError) showToast('error', requestErrorMessage(credit.error));
+  }, [credit.error, credit.isError, showToast]);
 
   const dismissConfirmation = () => {
     setSelectedService(null);
@@ -128,7 +226,7 @@ export function ServicesScreen() {
     setIntent(requestIntent);
     request.mutate(requestIntent, {
       onSuccess: (order) => {
-        setConfirmedOrder(order);
+        showToast('success', `Pedido de ${order.serviceName} confirmado.`);
         dismissConfirmation();
       },
     });
@@ -158,7 +256,10 @@ export function ServicesScreen() {
     setCreditIntent(requestIntent);
     credit.mutate(requestIntent, {
       onSuccess: () => {
-        setCreditedAmount(requestIntent.amount);
+        showToast(
+          'success',
+          `Crédito de ${formatCurrency(requestIntent.amount)} adicionado ao saldo.`,
+        );
         dismissCreditModal();
       },
     });
@@ -251,30 +352,6 @@ export function ServicesScreen() {
           </Pressable>
         </View>
 
-        {creditedAmount !== null && (
-          <View style={styles.creditSuccessCard}>
-            <Text style={styles.creditSuccessText}>
-              Crédito de {formatCurrency(creditedAmount)} adicionado ao saldo.
-            </Text>
-          </View>
-        )}
-
-        {wallet.isError && (
-          <ErrorNotice
-            message={requestErrorMessage(wallet.error)}
-            onRetry={() => void wallet.refetch()}
-          />
-        )}
-
-        {confirmedOrder && (
-          <View style={styles.successCard}>
-            <Text style={styles.successTitle}>Pedido confirmado!</Text>
-            <Text style={styles.successText}>
-              {confirmedOrder.serviceName} foi adicionado. O saldo atual está no cartão acima.
-            </Text>
-          </View>
-        )}
-
         <View
           style={styles.section}
           onLayout={(event) => {
@@ -302,10 +379,12 @@ export function ServicesScreen() {
               <Text style={styles.loadingText}>Buscando serviços...</Text>
             </View>
           ) : services.isError ? (
-            <ErrorNotice
-              message={requestErrorMessage(services.error)}
-              onRetry={() => void services.refetch()}
-            />
+            <View style={styles.loadingCard}>
+              <Text style={styles.loadingText}>Serviços indisponíveis.</Text>
+              <Pressable accessibilityRole="button" onPress={() => void services.refetch()}>
+                <Text style={styles.retryText}>Tentar novamente</Text>
+              </Pressable>
+            </View>
           ) : services.data.length === 0 ? (
             <View style={styles.emptyCard}>
               <Text style={styles.emptyTitle}>Nenhum serviço disponível</Text>
@@ -321,7 +400,6 @@ export function ServicesScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={`Solicitar ${service.name} por ${formatCurrency(service.price, service.currency)}`}
                   onPress={() => {
-                    setConfirmedOrder(null);
                     setIntent(null);
                     setSelectedService(service);
                     request.reset();
@@ -396,6 +474,10 @@ export function ServicesScreen() {
         </View>
       </View>
 
+      {toast && selectedService === null && !creditModalVisible && (
+        <ToastBanner key={toast.id} toast={toast} top={10} onDismiss={dismissToast} />
+      )}
+
       <Modal
         animationType="fade"
         transparent
@@ -403,6 +485,14 @@ export function ServicesScreen() {
         onRequestClose={dismissConfirmation}
       >
         <View style={styles.modalBackdrop}>
+          {toast?.type === 'error' && (
+            <ToastBanner
+              key={toast.id}
+              toast={toast}
+              top={insets.top + 10}
+              onDismiss={dismissToast}
+            />
+          )}
           <View style={styles.modalCard}>
             <View style={styles.modalIcon}>
               {selectedService && (
@@ -427,11 +517,6 @@ export function ServicesScreen() {
                   : ''}
               </Text>
             </View>
-            {request.isError && (
-              <Text accessibilityRole="alert" style={styles.modalError}>
-                {requestErrorMessage(request.error)}
-              </Text>
-            )}
             <Pressable
               accessibilityRole="button"
               disabled={request.isPending}
@@ -468,6 +553,14 @@ export function ServicesScreen() {
         onRequestClose={dismissCreditModal}
       >
         <View style={styles.modalBackdrop}>
+          {toast?.type === 'error' && (
+            <ToastBanner
+              key={toast.id}
+              toast={toast}
+              top={insets.top + 10}
+              onDismiss={dismissToast}
+            />
+          )}
           <View style={styles.modalCard}>
             <View style={styles.creditModalIcon}>
               <Plus color={colors.purple} size={25} strokeWidth={2} />
@@ -512,11 +605,6 @@ export function ServicesScreen() {
             <Text style={styles.creditSimulationNote}>
               Crédito de demonstração: não há cobrança nem pagamento real.
             </Text>
-            {credit.isError && (
-              <Text accessibilityRole="alert" style={styles.modalError}>
-                {requestErrorMessage(credit.error)}
-              </Text>
-            )}
             <Pressable
               accessibilityRole="button"
               disabled={credit.isPending}
@@ -559,6 +647,12 @@ const colors = {
   surface: '#FAFAFB',
   border: '#EFEEF1',
   green: '#37863F',
+  toastSuccessBackground: '#F0FAF3',
+  toastSuccessBorder: '#CDEBD5',
+  toastSuccessIcon: '#278248',
+  toastErrorBackground: '#FFF5F3',
+  toastErrorBorder: '#F2D1CB',
+  toastErrorIcon: '#C64B3F',
 };
 
 const styles = StyleSheet.create({
@@ -742,56 +836,51 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 38,
   },
-  errorCard: {
-    backgroundColor: '#FFF4F2',
-    borderColor: '#F5D6D1',
-    borderRadius: 14,
-    borderWidth: 1,
-    marginBottom: 16,
-    padding: 14,
-  },
-  errorText: {
-    color: '#8E352B',
-    fontSize: 12,
-    lineHeight: 18,
-  },
   retryText: {
     color: colors.purple,
     fontSize: 12,
     fontWeight: '700',
     marginTop: 9,
   },
-  successCard: {
-    backgroundColor: '#EAF7EF',
-    borderColor: '#D2EEDD',
-    borderRadius: 14,
+  toast: {
+    alignItems: 'center',
+    borderRadius: 15,
     borderWidth: 1,
-    marginBottom: 18,
-    padding: 14,
+    elevation: 8,
+    flexDirection: 'row',
+    gap: 11,
+    left: 16,
+    minHeight: 58,
+    paddingHorizontal: 15,
+    paddingVertical: 11,
+    position: 'absolute',
+    right: 16,
+    shadowColor: '#1C1230',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    zIndex: 20,
   },
-  successTitle: {
-    color: '#22633D',
-    fontSize: 14,
-    fontWeight: '800',
-    marginBottom: 4,
+  toastSuccess: {
+    backgroundColor: colors.toastSuccessBackground,
+    borderColor: colors.toastSuccessBorder,
   },
-  successText: {
-    color: '#39724F',
-    fontSize: 12,
+  toastError: {
+    backgroundColor: colors.toastErrorBackground,
+    borderColor: colors.toastErrorBorder,
+  },
+  toastMessage: {
+    color: colors.ink,
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
     lineHeight: 18,
   },
-  creditSuccessCard: {
-    backgroundColor: '#EAF7EF',
-    borderColor: '#D2EEDD',
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 17,
-    padding: 12,
-  },
-  creditSuccessText: {
-    color: '#22633D',
-    fontSize: 12,
-    fontWeight: '700',
+  toastDismiss: {
+    alignItems: 'center',
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
   },
   section: {
     marginTop: 2,
@@ -1034,12 +1123,6 @@ const styles = StyleSheet.create({
     color: colors.deepPurple,
     fontSize: 17,
     fontWeight: '800',
-  },
-  modalError: {
-    color: '#A33428',
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 15,
   },
   confirmButton: {
     alignItems: 'center',
