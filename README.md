@@ -8,6 +8,32 @@ Aplicação mobile e API para simular uma lavanderia automatizada. O plano funci
 - `mobile/`: aplicativo React Native com Expo Router e TypeScript.
 - `docs/`: documentação da arquitetura e contrato da API.
 
+## Decisões, limitações e próximos passos
+
+### Decisões de escopo
+
+- Priorizei a carteira digital e o histórico de compras para que o cliente possa consultar o saldo, entender os créditos e débitos e acompanhar os pedidos realizados.
+- Tratei a consistência do checkout como requisito central: validar o serviço e o saldo, debitar a carteira, criar o pedido e registrar a transação de forma atômica. Assim, uma falha não deve deixar cobrança sem pedido ou pedido sem débito.
+- Usei uma chave `Idempotency-Key` por intenção de compra. Se o app repetir uma solicitação por causa de uma falha ou demora de rede, a API devolve o resultado original em vez de cobrar novamente. Reutilizar a chave para outro serviço é rejeitado.
+- Mantive os créditos da carteira como simulação para demonstração; não há integração com provedor de pagamentos nem cobrança real.
+
+### Limitações conhecidas e pendências
+
+- A API e o app ainda não têm autenticação nem autorização. A demonstração opera sobre uma única carteira padrão seedada; não há isolamento de saldo, pedidos ou extrato por cliente.
+- O checkout confirma o pedido e registra o débito, mas não reserva nem inicia uma máquina real. Não há disponibilidade em tempo real, estado de execução ou tratamento de falha do equipamento.
+- Como as máquinas podem estar em uso, falta implementar uma fila de espera/reserva que informe a posição do cliente e coordene a disponibilidade antes de iniciar o serviço.
+- Os créditos atuais são simulados. Permanecem pendentes integração de pagamento real e regras para estorno/reembolso, especialmente se o serviço não puder ser executado.
+- A listagem de pedidos não é paginada. Também faltam monitoramento e alertas operacionais.
+- O deploy de demonstração usa Render Free e SQLite local, sem garantia de persistência dos dados após reinícios ou suspensão do serviço. Não é uma configuração adequada para produção ou para guardar saldo real.
+
+### O que melhoraria com mais tempo
+
+1. Implementaria autenticação e autorização por cliente, associando carteira, pedidos e extrato à identidade autenticada.
+2. Modelaria máquinas e sua disponibilidade e implementaria fila de espera/reserva com transições de estado e proteção contra duas reservas simultâneas para o mesmo equipamento.
+3. Integraria pagamentos reais com confirmação confiável, idempotência também no provedor e fluxo de estorno quando o serviço falhar ou for cancelado.
+4. Substituiria o armazenamento de demonstração por um banco gerenciado e durável, com backups e estratégia de recuperação.
+5. Acrescentaria paginação ao histórico e observabilidade (logs estruturados, métricas e alertas), além de testes end-to-end para checkout, fila e falhas de integração com máquinas/pagamentos.
+
 ## Backend
 
 A wallet está implementada no backend: domínio de débito e crédito em `decimal`, versão para concorrência otimista, persistência SQLite versionada por migrations e seed de R$ 50,00. A API expõe `GET /api/v1/wallet` para a carteira padrão, `GET /api/v1/wallet/{id}` para consultar uma carteira pelo ID e `POST /api/v1/wallet/credits`.
